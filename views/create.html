@@ -1,0 +1,30 @@
+<html>
+    <head>
+        <title>Create User</title>
+        <link rel="stylesheet" href="/styles.css">
+    </head>
+    <body>
+        <a href="/"><h3>Home Page</h3></a>
+        <a href="/profile"><h3>Profile Page</h3></a>
+        <a href="/new-user"><h3>new User</h3></a>
+        <a href='/login'><h3>Login</h3></a>
+        <br>
+
+        <h1>CREATE USER PAGE</h1>
+
+        <form action="/new-user" method="POST">
+            <p>The Form</p>
+            <label>Enter Name: </label>
+            <input type="text" name="name" >
+            <label>Enter E-mail</label>
+            <input type="email" name="email">
+            <label>Enter Favorite Book: </label>
+            <input type='text' name="favoriteBook">
+            <label>Enter Password: </label>
+            <input type="password" name="Password">
+
+            <button>Submit</button>
+        </form>
+
+    </body>
+</html>

@@ -1,0 +1,293 @@
+HASHING AND SALTING
+- Basicallyy just a way to scure User Passwords.
+
+Library Usually used with Mongdb - Bcrypt
+
+Bcrypt is the library that is usually used to hash and salt a password field.
+
+[ npm install bcryptjs ]
+
+    STEPS
+- Import the bcrypt library into your Mongoose schema:
+
+const bcrypt = require('bcryptjs');
+
+Define your user schema with a password field:
+
+Copy code
+const userSchema = new mongoose.Schema({
+  email: { type: String, unique: true },
+  password: String,
+});
+
+
+Then we are making use of a `PRE` middleware function
+
+This PRE function will run just beofre saving a record/document to mongo
+
+so we will hash the Password inside the pre function
+    i.e hash the password just before it is saved to mongo database.
+
+pre method/function takes 2 arguements ('the hook name' and 'an anonymous function')
+    * The 'hook name' in this case will be save. (it is a special keyword)
+        It tells mongoose to run the anonymous function before saving a record to mongo database.
+
+    * The anonymous function takes next as a parameter. (next is a middleware)
+            next is a MIDDLEWARE.
+        it tells the code to move on to the next line or function. 
+        next represents the next piece of middleware/function that will run after this pre function.
+
+Inside the presave hook, mongoose asigns the object it's about to save to the databse to a 'this' KEYWORD.
+i.e inside the call back function, 'this' will refer to the [object/document/record] that wants to be saved
+    e.g * inside the pre method/function
+            const currentUser = this
+
+then to hash the password, use bcrypt.hash()
+
+bcrypt.hash() takes 3 parameters
+bcrypt.hash('plain Text Password', 'number', callbackFunc)
+    Note: Don't use an arrow function as the callBack func, Define the callbackFunc normally.
+
+    i.e DONT DO THIS
+    bcrypt.hash('plain Text Password', 'number', () => {
+
+    })
+        DO THIS
+    bcrypt.hash('plain Text Password', 'number', function () {
+
+    })
+ 
+- first arguement is the password you're trying to hash/encrypt
+- second arguement (number) tells bcrypt how many times to apply the encryption algorith.
+    The bigger the number, the slower the process but the greater the security (10 is usually used here.)
+- The call back function runs after the password is hashed. (takes 2 arguements)
+    bcrypt pass 2 callbacks to the call back function, an 'err' and the 'hash' password
+        the 'hash' is new hased password, the 'err' is to check if error ocuured while hashing
+
+    so the plain text password will be replaced by the hash password
+
+
+
+Syntax
+    *still Inside the scheema file at the end before exporting the scheema
+
+'scheemaName'.pre('save', (next) => {
+    const 'objectVar' = this // represent whatever object to be saved in the database.
+
+    bcrypt.hash('objectVar'.'passwordPropertie', 10, function (err,hash) {
+        if (err) {
+            console.log(err)
+            return next()
+        }
+        'objectVar'.'passwordPropertie' = hash
+        next()
+    })
+}) 
+
+
+        SESSION AND COOKIE
+
+HTTP is a Stateless Protocol.
+
+For authentication to work, server needs a way to track users as they move from page to page.
+    WHat session is For.
+
+session represents one visit by one browser to a website.
+    server can create 'session ID' when a visitor logs in to a site
+    The sesion ID identify's that browser and last for a speciifc period of time.
+    After that time, the session is destroyed and the user is forgotten
+
+Server can save more information along with the session ID.
+    i.e it can save a userID
+
+
+    HOW IT WILL WORK IN THIS APP
+- when a user logs in,
+
+    the server will create a session containing the session ID and the UserID
+        (all info on the session is stored on the server)
+    
+    For the browser to identify itself we will use a 'COOKIE'
+
+        COOKIE
+    - a Key Value managed by the web browser.
+    - it can store any information that the website wants to save.
+        The Serve can Create, Modify, Delete or Read from a cookie
+
+For this App, the server will create a cookie in the browser with onl the users session ID
+    SO the Session ID will be used to lookup the UserID.
+
+        SETTING UP SESSIONS IN EXPRESS
+install express-session (npm install 'express-session' )
+
+NOTE: session are attached to the request object.
+
+Import it in your main file
+
+const session = require('express-session')
+
+Then.. 
+- Set up the 'session' middleware function with the some parameters/configurations.
+    The only required parameter is 'secret'
+        A string that is used to sign the session ID cookie
+    Other Parameters are: specify the cookie name, set the cookie expiration time:
+
+app.use(session({
+  secret: 'mySecret',
+  name: 'myCookie',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false,
+    maxAge: 1000 * 60 * 60 * 24 // 1 day
+  }
+}));
+
+
+    NOTE:
+- Once a session is created, you can access it in the request object (req.body) of any route.
+    (Syntax >> req.session.propertyName )
+
+
+After logging/authenticating in the User, or when a user signs up
+Then is when you create a session.
+    Save the user's ID in the session
+    
+    REMEMBER: 
+        session Data is only stored on the server (for security reasons)
+            i.e the userID is never sent to the client browser.
+
+        Only a cookie containing the session Id is sent to the server
+
+    To set session data
+        req.session.'definePropertyNmae' = 'valueYouWantToAssign it too'
+
+You can then use the session to create protected routes
+    How? check if the a session with your defined definePropertyNmae exist.
+        if it dosent you can render a Log in page / redirect to a log in oage
+
+        if it does, you just display the normal page information
+
+
+        MAKE SESSION AVAILABLE TO WHOLE APP
+To Make the session value available to the entire application // make use of a middleware
+    we will use a locals property in the response object.
+
+The response object has a property called 'locals'
+locals provides a way for you to add information to the resposne object.
+    - think of it like stuffing a custom varaoble in to the response
+    - all the views have access to response.local object.
+        and REM-ember: the session are attached to the request object.
+
+*in the main app/server js file.
+
+app.use(function (req, res, next) {
+    res.locals.'assignLocalName' = req.session.'sessionPropertyName'
+    next()
+})
+
+        e.g 
+
+app.use((req, res, next) => {
+    res.locals.currentUser = req.session.userId
+    next();
+})
+
+Then you can acces the property in your views by just using the name assigned to the locals
+
+i.e
+if (!currentUser) {
+    return <h1>User Not logged in, so log in</h1>
+} else {
+    return <h1>User Log in<h1>
+}
+
+    OR you can just pass it as a normal page parameter the way you pass variables
+        I.E
+
+app.get('/', (req,res) => {
+    res.locals.currentUser = req.session.userId
+    const currentUser = res.locals.currentUser
+    
+    res.render('index', {usercurrent: currentUser})
+})
+
+But This logic will have to be done on all routes that needs the session value
+
+
+        DELETING A SESSION (req.session.destroy())
+
+- you use 'req.session.destroy' to Delete a session
+    i.e you want to logout a User.
+
+The '.destry' method takes a callBack function
+
+    SYNTAX
+req.session.destroy((err) => {
+    if (err) {
+        console.log(err)
+        return next()
+    }  else {
+        res.redirect('path/to/redirectTo)
+    }
+})
+
+
+
+SIDE NOTE:
+- In express, Middlewares are functions that have access to the request and response object.
+
+Request/Response cycle is the entire process between request and response
+
+A typical middleware takes 3 parameters : req, res and next
+
+app.use((req, res, next) => {
+    ..code
+})
+
+YOU CAN CREATE CUSTOM MIDDLEWARE
+- create a Folder for the middleware.
+- then create a file that stroes the middleware
+
+- after writing your middleware function, you will need to export it and then..
+    import it in the main 'index/server' file an use it.
+
+How ?
+const middlewares = require('./middleware/file/name') // importing the middleware
+
+app.get('signUp' , middlewares.'FUnctionName' , (req,res,next) => {
+
+})
+
+
+
+        SETTING UP A PRODUCTION READY SESSION STORE.
+NOTE: SESSION data is not advised to be stored on the client for performance issuses.
+- if it's a big site with multiple users, the server can get slow and eventually crash
+- so it make more reliable you can store it in a database.
+
+- we will be using a 'connect mongo' module. (npm install connect-mongo)
+
+import/require the module in your main 'app/server' file.
+
+HOW?
+
+const session = require('express-session')
+const MongoStore = require('connect-mongo')
+
+- This allows the connect mongo middleware to be able to access the session data
+
+
+Then in the middleware you used to setup the session,
+Add a new key 'store' and set it to the MongoStore.create({options})
+we use a .create method to create the database for the store.
+    the .create method will have a property 'mongoUrl' which is the urI to the mongo database
+            some other properties: ttl - (how long the session will last *time to live*)
+                                    autoRemove - means that when the session expires, the specific user session data/document in MongoDB will be removed/deleted automatically. (I'm setting to 'native')
+    i.e store: MongoStore({
+        mongoUrl: 'link ot mongodb url',
+        ttl: 14 * 24 * 60 * 60,
+        autoRemove: 'native'
+    })
+
+inside will be  'Mongoose

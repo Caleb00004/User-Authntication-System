@@ -1,0 +1,33 @@
+
+html {
+    padding: 2em;
+    background-color: gray;
+    color: white;
+}
+h1 {
+    /* color: red; */
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+}
+
+button {
+    margin-top: 1em;
+    padding: 0.5em 2em 0.5em 2em;
+    background-color: rgb(170, 147, 15);
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+a {
+    text-decoration: none;
+    color: rgb(170, 15, 15);
+}
