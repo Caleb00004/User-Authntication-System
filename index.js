@@ -7,7 +7,7 @@ const MongoStore = require('connect-mongo')
 const mid = require('./middleware/index') // importing my custom middleware
 const app = express()
 
-const dbURI = `mongodb+srv://caleb:password1255@cluster0.tmikxym.mongodb.net/Practice-Database?retryWrites=true&w=majority`
+const dbURI = `mongodb+srv://hide`
 
 // setting view Engine
 app.set('view engine', 'ejs')
